@@ -5,8 +5,8 @@ import { UsersModule } from '../users/users.module';
 import { EventsModule } from '../events/events.module';
 
 @Module({
-    imports: [UsersModule, EventsModule],
-    controllers: [BookingsController],
-    providers: [BookingsService],
+  imports: [UsersModule, EventsModule],
+  controllers: [BookingsController],
+  providers: [BookingsService],
 })
 export class BookingsModule {}
