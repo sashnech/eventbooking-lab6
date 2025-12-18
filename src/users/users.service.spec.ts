@@ -28,7 +28,10 @@ describe('UsersService', () => {
     const users = service.findAll();
 
     expect(users).toHaveLength(1);
-    expect(users[0]).toMatchObject({ name: 'Andrii', email: 'andrii@example.com' });
+    expect(users[0]).toMatchObject({
+      name: 'Andrii',
+      email: 'andrii@example.com',
+    });
   });
 
   it('should return a user by id', () => {
