@@ -1,10 +1,6 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
-import { Event, EventsService } from '../events/events.service';
-import { User, UsersService } from '../users/users.service';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { EventsService } from '../events/events.service';
+import { UsersService } from '../users/users.service';
 
 export interface Booking {
   id: number;
