@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Lint • Format • Build • Tests • Commits
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prettier (check)
+        run: npx prettier --check "src/**/*.ts" "test/**/*.ts"
+
+      - name: ESLint (no-fix)
+        run: npx eslint "{src,test}/**/*.ts" --max-warnings=0
+
+      - name: Build
+        run: npm run build
+
+      - name: Unit tests
+        run: npm test
+
+      - name: E2E tests
+        run: npm run test:e2e
+
+      - name: Conventional commits (commitlint)
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          npm i --no-save @commitlint/cli @commitlint/config-conventional
+          npx commitlint --config commitlint.config.cjs --from "$BASE_SHA" --to "$HEAD_SHA" --verbose

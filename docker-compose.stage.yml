@@ -1,0 +1,11 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: event-booking-api-stage
+    restart: unless-stopped
+    environment:
+      - PORT=3000
+    ports:
+      - "80:3000"

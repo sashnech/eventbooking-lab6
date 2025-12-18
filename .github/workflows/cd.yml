@@ -1,0 +1,68 @@
+name: CD (Staging)
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to staging
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Unit tests
+        run: npm test
+
+      - name: E2E tests
+        run: npm run test:e2e
+
+      # Option A: Deploy via webhook (Render/Railway/your own)
+      - name: Deploy (webhook)
+        if: ${{ secrets.STAGING_DEPLOY_HOOK_URL != '' }}
+        run: |
+          curl -fsSL -X POST "${{ secrets.STAGING_DEPLOY_HOOK_URL }}"
+
+      # Option B: Deploy to VPS via SSH + Docker Compose
+      # Required GitHub secrets:
+      #   SSH_HOST, SSH_USER, SSH_KEY (private key), SSH_PORT (optional), APP_DIR
+      - name: Deploy (SSH + Docker)
+        if: ${{ secrets.SSH_HOST != '' }}
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            set -e
+            cd "${{ secrets.APP_DIR }}"
+            git fetch --all
+            git reset --hard "origin/${{ github.ref_name }}"
+            docker compose -f docker-compose.stage.yml up -d --build
+            docker image prune -f
+
+      - name: Fail if no deploy target configured
+        if: ${{ secrets.STAGING_DEPLOY_HOOK_URL == '' && secrets.SSH_HOST == '' }}
+        run: |
+          echo "No deploy target configured. Set either STAGING_DEPLOY_HOOK_URL or SSH_* + APP_DIR secrets."
+          exit 1
